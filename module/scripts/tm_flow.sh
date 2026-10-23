@@ -26,6 +26,10 @@ CONF="$MODDIR/config.conf"
 [ -f "$CONF" ] || CONF="$MODDIR/config.example.conf"
 [ -f "$CONF" ] && . "$CONF"
 
+# 坐标可随时从面板改，单独存一个文件，每轮重新读取
+COORD_FILE="$MODDIR/coord.conf"
+[ -f "$COORD_FILE" ] && . "$COORD_FILE"
+
 LAT="${LAT:-}"
 LON="${LON:-}"
 JITTER_DEG="${JITTER_DEG:-0.00003}"   # 坐标抖动（度）：0.00003 ≈ 3 米
@@ -141,6 +145,8 @@ write_status() {
         echo "activeCls:\"$(echo "$ACTIVE" | grep -q '无签到' && echo '' || echo 'warn')\","
         echo "signed:\"$(san "$SIGNED_INFO")\","
         echo "coords:\"$(san "$COORD_TXT")\","
+        echo "lat:\"$(san "$LAT")\","
+        echo "lon:\"$(san "$LON")\","
         echo "enabled:\"$([ "$(cat "$EN_FILE" 2>/dev/null)" = "0" ] && echo 0 || echo 1)\","
         echo "refresh:\"$(san "$LAST_REFRESH_TXT")\","
         echo "log:[$(sanlog)]"
@@ -269,6 +275,9 @@ while true; do
                 ;;
         esac
     fi
+
+    # 面板可能刚改过坐标，每轮重新读一次
+    [ -f "$COORD_FILE" ] && . "$COORD_FILE" 2>/dev/null
 
     # ---- 暂停状态 ----
     if [ "$(cat "$EN_FILE" 2>/dev/null)" = "0" ]; then

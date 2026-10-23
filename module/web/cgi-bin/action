@@ -1,9 +1,17 @@
 #!/system/bin/sh
-# 面板按钮后端：只写命令文件，由 tm_flow.sh 每轮消费
+# 面板后端：命令投递给 tm_flow.sh；坐标直接写 coord.conf
 CMD=/data/local/tmp/tm_cmd
 EN=/data/local/tmp/tm_enabled
+MODDIR=/data/adb/modules/tm-autosign
+COORD="$MODDIR/coord.conf"
 
 q="${QUERY_STRING:-}"
+
+field() {
+    # 从 query 里取某个键的值，只保留数字/小数点/负号，防注入
+    printf '%s' "$q" | sed -n "s/.*[?&]$1=\([^&]*\).*/\1/p" | tr -cd '0-9.-'
+}
+
 case "$q" in
     *cmd=refresh*) echo refresh > "$CMD" ;;
     *cmd=on*)      echo on      > "$CMD" ;;
@@ -14,6 +22,35 @@ case "$q" in
         else
             echo off > "$CMD"
         fi
+        ;;
+    *cmd=setcoord*)
+        lat=$(field lat)
+        lon=$(field lon)
+        # 基本范围校验：纬度 ±90，经度 ±180，且不能为 0/0
+        ok=1
+        [ -z "$lat" ] && ok=0
+        [ -z "$lon" ] && ok=0
+        awk -v a="$lat" -v b="$lon" 'BEGIN{
+            if (a=="" || b=="") exit 1;
+            if (a+0 < -90 || a+0 > 90) exit 1;
+            if (b+0 < -180 || b+0 > 180) exit 1;
+            if (a+0 == 0 && b+0 == 0) exit 1;
+            exit 0;
+        }' || ok=0
+        if [ "$ok" = "1" ]; then
+            printf 'LAT="%s"\nLON="%s"\n' "$lat" "$lon" > "$COORD"
+            chmod 600 "$COORD" 2>/dev/null
+            echo "Content-Type: application/json"
+            echo "Cache-Control: no-store"
+            echo ""
+            echo "{\"ok\":true,\"lat\":\"$lat\",\"lon\":\"$lon\"}"
+            exit 0
+        fi
+        echo "Content-Type: application/json"
+        echo "Cache-Control: no-store"
+        echo ""
+        echo '{"ok":false,"error":"invalid coordinate"}'
+        exit 0
         ;;
 esac
 
