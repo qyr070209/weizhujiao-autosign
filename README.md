@@ -83,7 +83,7 @@ https://open.weixin.qq.com/connect/oauth2/authorize
 | `LAT` / `LON` | 无 | 教室坐标，仅 `isGPS>0` 时随报文提交。**也可以直接在面板「坐标设置」里改**，保存后 5 秒内生效，无需重启 |
 | `JITTER_DEG` | `0.00003` | 坐标随机抖动（约 ±3 米） |
 | `INTERVAL` | `5` | 轮询间隔（秒） |
-| `REFRESH_EVERY` | `660` | 主动续号周期（秒） |
+| `REFRESH_EVERY` | `15` | 主动续号周期（秒） |
 | `WK_START` / `WK_END` | `7` / `23` | 持有 wakelock 的时段 |
 
 ---
