@@ -8,8 +8,10 @@ COORD="$MODDIR/coord.conf"
 q="${QUERY_STRING:-}"
 
 field() {
-    # 从 query 里取某个键的值，只保留数字/小数点/负号，防注入
-    printf '%s' "$q" | sed -n "s/.*[?&]$1=\([^&]*\).*/\1/p" | tr -cd '0-9.-'
+    # 严格只接受十进制数（可带负数与小数），其余一律丢弃。
+    # 不能用 tr 过滤——那会把 "abc;rm -rf /" 滤成 "3-2" 这种伪数字。
+    v=$(printf '%s' "$q" | sed -n "s/.*[?&]$1=\([^&]*\).*/\1/p")
+    printf '%s' "$v" | grep -qE '^-?[0-9]{1,3}(\.[0-9]{1,10})?$' && printf '%s' "$v"
 }
 
 case "$q" in
