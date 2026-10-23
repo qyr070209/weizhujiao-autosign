@@ -1,0 +1,17 @@
+# 本地私人配置（含坐标），绝不入库
+module/config.conf
+config.conf
+
+# 构建产物
+dist/
+*.zip
+*.nsz
+
+# 调试产物
+diag/
+*.log
+tm_*.txt
+
+# 系统
+.DS_Store
+Thumbs.db

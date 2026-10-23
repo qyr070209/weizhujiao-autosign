@@ -1,0 +1,23 @@
+#!/system/bin/sh
+# 面板按钮后端：只写命令文件，由 tm_flow.sh 每轮消费
+CMD=/data/local/tmp/tm_cmd
+EN=/data/local/tmp/tm_enabled
+
+q="${QUERY_STRING:-}"
+case "$q" in
+    *cmd=refresh*) echo refresh > "$CMD" ;;
+    *cmd=on*)      echo on      > "$CMD" ;;
+    *cmd=off*)     echo off     > "$CMD" ;;
+    *cmd=toggle*)
+        if [ "$(cat "$EN" 2>/dev/null)" = "0" ]; then
+            echo on > "$CMD"
+        else
+            echo off > "$CMD"
+        fi
+        ;;
+esac
+
+echo "Content-Type: application/json"
+echo "Cache-Control: no-store"
+echo ""
+echo '{"ok":true}'
